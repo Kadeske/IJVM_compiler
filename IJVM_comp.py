@@ -1,8 +1,19 @@
 import ast
+import re
 from clean_code import clean
+
+#non è per nienete ordinato nè ottimizzato, è già troppo se l'ho fatto
+#Tutto per l'agguato alla spigola
+"""
+          /"*._         _
+      .-*'`    `*-.._.-'/
+    < * ))     ,       ( 
+      `*-._`._(__.--*"`.\
+"""
 
 def genera_albero(espressione):
     return ast.parse(str(espressione), mode='eval').body
+
 def traduci_in_ijvm(nodo, output=None):
     if output is None:
         output = []
@@ -11,6 +22,22 @@ def traduci_in_ijvm(nodo, output=None):
         output.append(f"BIPUSH {nodo.value}")
     elif isinstance(nodo, ast.Name):
         output.append(f"ILOAD {nodo.id}")
+    
+    # Chiamate a funzione (ast.Call fa da solo e lo riconosce, godo)
+    elif isinstance(nodo, ast.Call):
+        # Carica OBJREF
+        output.append("LDC_W OBJREF")
+        
+        # Carica tutti gli argomenti sullo stack
+        for a in nodo.args:
+            traduci_in_ijvm(a, output)
+        
+        # Determina il numero di argomenti
+        num_args = len(nodo.args)
+        
+        # Genera la chiamata 
+        output.append(f"INVOKEVIRTUAL {nodo.func.id}")
+    
     elif isinstance(nodo, ast.BinOp):
         # Carica OBJREF prima di ogni operazione burda 
         if isinstance(nodo.op, (ast.Mult, ast.Div, ast.Mod)):
@@ -40,7 +67,6 @@ def compila_ijvm(espressione):
     albero = genera_albero(espressione)
     codice = traduci_in_ijvm(albero)
     return codice
-
 
 def getStruct(s):
     if "while" in s:
@@ -72,10 +98,7 @@ def getArithmetic(s):
     elif "--" in s:
         tmp = s.split("--")
         s = f"{tmp[0].strip()} = {tmp[0].strip()} -1"
-
-
     
-
     s = s.split("=")
 
     res = compila_ijvm(s[1].strip())
@@ -83,7 +106,6 @@ def getArithmetic(s):
     for i in s[0]:
         if i.isalnum():
             res.append(f"ISTORE {i}")
-        
 
     return res 
 
@@ -100,11 +122,11 @@ def getOper(s):
         return "=="
     else:
         return None
+    
 def getCondition(s, label):
     oper = getOper(s)
     res = ''
     
-
     s = s.split(oper)
 
     if "<" in oper:
@@ -129,7 +151,6 @@ def getCondition(s, label):
             res+= f"IFEQ {label}\n"
     return res
     
-
 def compila(input_path):
 
     inp = open(input_path, "r")
@@ -137,7 +158,6 @@ def compila(input_path):
     lines = [x.strip() for x in inp.readlines()]
 
     lines = clean(lines)
-
 
     order = []
     opened = []
@@ -147,7 +167,6 @@ def compila(input_path):
     next_tag = 0
 
     code = []
-
 
     for l in lines:
 
@@ -169,7 +188,6 @@ def compila(input_path):
 
             order.append(f"{prec}C{act}:")
 
-
         if '{' in l:
 
             if "(" in l:
@@ -182,7 +200,6 @@ def compila(input_path):
                 tmp = cond.split(";")
                 order.append('\n'.join(getArithmetic(tmp[0][tmp[0].index("(")+1:].strip())))
 
-
             order.append(f"O{next_tag}:")
 
             if getStruct(l) == "for":
@@ -192,9 +209,6 @@ def compila(input_path):
             elif cond != "empty":
                 order.append(getCondition(cond,f"C{next_tag}"))
 
-
-
-            
             opened.append(next_tag)
             struct_opened.append(getStruct(l))
             struct_opened_cond.append(cond)
@@ -217,30 +231,79 @@ def compila(input_path):
             order.append("LDC_W OBJREF")
             order.append("INVOKEVIRTUAL input")
             order.append(f"ISTORE {tmp[1].strip()}")
+        elif "print" in l:
+            order.append("LDC_W OBJREF")
+            tmp = l.replace("print", "")
+            order.extend(compila_ijvm(tmp.strip()))
+            order.append("INVOKEVIRTUAL print")
 
-        
 
     inp.close()
     return order
 
+def elenca_variabili(input_path):
+
+    inp = open(input_path, "r")
+
+    lines = [x.strip() for x in inp.readlines()]
+
+    lines = clean(lines)
+
+    words = ["for","while", "if", "else", "print", "input", "return", "fun"]
+
+    elenco_lett = []
+
+    for w in words:
+        lines = [l.replace(w,"") for l in lines]
+
+    for l in lines:
+        for lett in l:
+            if lett.isalpha():
+                elenco_lett.append(lett)
+
+    elenco_lett = list(set(elenco_lett))
+
+    return elenco_lett
+
+
+    
 
 
 
 
 def main():
+
     input_path = input("Inserisci il percorso del file contenente lo pseudocidice: ")
+
     output_path = "out.txt"
 
+    #elenca variabili
+    elenco_var = elenca_variabili(input_path)
+
+    #genera variabili
+    var = []
+    var.append(".var")
+    var.extend(elenco_var)
+    var.append(".end-var")
+
+    
+    
+
     out = open(output_path, "w+")
+
+    #aggiungi var al codice
+    for v in var:
+        print(f"{v}")
+        out.write(f"{v}\n") 
+
     for o in compila(input_path):
         print(f"{o}")
         out.write(f"{o}\n")    
 
-    print(f"DUMP FATTO IN '{output_path}'")
-
-    print(compila_ijvm("5"))
+    print(f"\n\nDUMP FATTO IN '{output_path}'")
 
 
+    
 
 if __name__ == "__main__":
     main()

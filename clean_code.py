@@ -1,6 +1,5 @@
 def clean(code):
 
-    print("--> PULIZIA CODICE")
 
     #spazi, virgola(tranne nel for), numeri iniziali
     new_code = []
@@ -14,6 +13,7 @@ def clean(code):
             tmp = tmp[1:]    
     
         new_code.append(tmp)
+    
 
     return new_code
     
