@@ -1,6 +1,8 @@
 import ast
 import re
 from clean_code import clean
+import subprocess
+import platform
 
 #non è per nienete ordinato nè ottimizzato, è già troppo se l'ho fatto
 #Tutto per l'agguato alla spigola
@@ -10,6 +12,9 @@ from clean_code import clean
     < * ))     ,       ( 
       `*-._`._(__.--*"`.\
 """
+
+
+
 
 def genera_albero(espressione):
     return ast.parse(str(espressione), mode='eval').body
@@ -181,7 +186,7 @@ def compila(input_path):
                 cond = cond.split(";")
                 prec = f"\n{'\n'.join(getArithmetic(cond[2][:cond[2].index(")")].strip()))}\nGOTO O{act}\n"        # DA FINIRE
             elif "else" in l:
-                prec = f"GOTO C{act+1}\n"
+                prec = f"GOTO C{next_tag}\n"
 
             else:
                 prec = ""
@@ -267,13 +272,23 @@ def elenca_variabili(input_path):
 
 
     
+def clear_terminal():
+    if platform.system() == "Windows":
+        subprocess.run("cls", shell=True)
+    else:
+        subprocess.run("clear", shell=True)
 
-
+def menu_impostazioni():
+    print("Cosa vuoi sapere/modificare?")
 
 
 def main():
+    anonim = input("Mod anonima? [1 = si altro = no]")
 
-    input_path = input("Inserisci il percorso del file contenente lo pseudocidice: ")
+    if anonim:  #cancella la domandas
+        clear_terminal()
+
+    input_path = input("Inserisci il percorso del file contenente lo pseudocidice: "if not anonim else ">")
 
     output_path = "out.txt"
 
@@ -286,21 +301,21 @@ def main():
     var.extend(elenco_var)
     var.append(".end-var")
 
-    
-    
 
     out = open(output_path, "w+")
 
     #aggiungi var al codice
     for v in var:
-        print(f"{v}")
+        if not anonim:
+            print(f"{v}")
         out.write(f"{v}\n") 
 
     for o in compila(input_path):
-        print(f"{o}")
+        if not anonim:
+            print(f"{o}")
         out.write(f"{o}\n")    
 
-    print(f"\n\nDUMP FATTO IN '{output_path}'")
+    print(f"\n\nDUMP FATTO IN '{output_path}'" if not anonim else output_path)
 
 
     
