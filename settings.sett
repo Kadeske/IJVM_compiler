@@ -1,4 +1,4 @@
 [start_id] = 0
 [output_path] = "out.txt"
 [override_input_request] = true
-[default_input_path] = "input.txt"
+[default_input_path] = "esame.jas"

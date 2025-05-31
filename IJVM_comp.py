@@ -13,7 +13,16 @@ import platform
       `*-._`._(__.--*"`.\
 """
 
+def controlla_errore_sintassi(line, anonim):
 
+    if "else" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in else" if not anonim else "!!{")
+        if not "}" in line:
+            print ("ERRORE --> } mancante in else" if not anonim else "!!}")
+
+    if "int" in line and not "print" in line:
+        print("ERRORE -->  'int' non accettato" if not anonim else "!! -> int")
 
 
 def genera_albero(espressione):
@@ -63,8 +72,7 @@ def traduci_in_ijvm(nodo, output=None):
             output.append("INVOKEVIRTUAL mod")
     elif isinstance(nodo, ast.UnaryOp):
         traduci_in_ijvm(nodo.operand, output)
-        if isinstance(nodo.op, ast.USub):
-            output.append("INEG")
+        
     
     return output
 
@@ -141,11 +149,11 @@ def getCondition(s, label):
         var1 = s[0].strip("(")
         var2 = s[1].strip(")")
 
-    res += '\n'.join(compila_ijvm(f"{var1}-{var2}".strip())) + "\n"
+    res += '\n'.join(compila_ijvm(f"{var1}-({var2})".strip())) + "\n"
 
     if oper == "==":
         res+= f"IFLT {label}\n"
-        res+='\n'.join(compila_ijvm(f"{var2}-{var1}".strip())) + "\n"
+        res+='\n'.join(compila_ijvm(f"{var2}-({var1})".strip())) + "\n"
         res+= f"IFLT {label}\n"
 
     else:
@@ -156,13 +164,7 @@ def getCondition(s, label):
             res+= f"IFEQ {label}\n"
     return res
     
-def compila(input_path, next_tag):
-
-    inp = open(input_path, "r")
-
-    lines = [x.strip() for x in inp.readlines()]
-
-    lines = clean(lines)
+def compila_corpo(lines, next_tag, anonim):
 
     order = []
     opened = []
@@ -173,6 +175,8 @@ def compila(input_path, next_tag):
     code = []
 
     for l in lines:
+
+        controlla_errore_sintassi(l, anonim)
 
         if '}' in l:
             act = opened.pop()
@@ -242,16 +246,9 @@ def compila(input_path, next_tag):
             order.append("INVOKEVIRTUAL print")
 
 
-    inp.close()
     return order
 
-def elenca_variabili(input_path):
-
-    inp = open(input_path, "r")
-
-    lines = [x.strip() for x in inp.readlines()]
-
-    lines = clean(lines)
+def elenca_variabili(lines):
 
     words = ["for","while", "if", "else", "print", "input", "return", "fun"]
 
@@ -321,58 +318,16 @@ def carica_impostazioni():
     inp.close()
     return start_id, output_path, override_input_request, default_input_path
 
-def main():
-
-    start_id, output_path, override_input_request, default_input_path = carica_impostazioni()
-
-    anonim = input("Mod anonima? [1 = si altro = no]")
-
-    if anonim:  #cancella la domandas
-        clear_terminal()
 
 
-    if override_input_request == False:
-        input_path = input("Inserisci il percorso del file contenente lo pseudocidice: "if not anonim else ">")
-    else:
-        input_path = str(default_input_path)
+'''
+inp = open("comp_py/test.txt", "r")
 
-    try:
-        open(input_path, "r")
-    except FileNotFoundError:
-        print(f"Il file ({input_path}) non esiste" if not anonim else "!")  
-        return
+lines = [x.strip() for x in inp.readlines()]
 
+lines = clean(lines)
 
-    #elenca variabili
-    elenco_var = elenca_variabili(input_path)
+inp.close()
 
-    #genera variabili
-    var = []
-    var.append(".var")
-    var.extend(elenco_var)
-    var.append(".end-var")
-
-
-    out = open(output_path, "w+")
-
-    #aggiungi var al codice
-    for v in var:
-        if not anonim:
-            print(f"{v}")
-        out.write(f"{v}\n") 
-
-    for o in compila(input_path, start_id):
-        if not anonim:
-            print(f"{o}")
-        out.write(f"{o}\n")    
-
-    print(f"\n\nDUMP FATTO IN '{output_path}'" if not anonim else "<<")
-
-
-    
-
-if __name__ == "__main__":
-    main()
-
-
-
+print(compila_corpo(lines, 0))
+'''

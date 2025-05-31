@@ -11,7 +11,7 @@ Caratteri come ';' e spazi vuoti sono ignorati.
 Contano solamente le andate a capo.
 I numeri ad inizio riga vengono **eliminati**, così da poter copiare da un pdf.
 
-esempio di input valido:
+esempio di input valido:<br>
 g = 10;  
 16  if(b>g){  
 17  while(g>5){  
