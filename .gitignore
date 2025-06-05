@@ -1,4 +1,5 @@
-.txt
+*.txt
 __pycache__
-.jas
-.ijvm
+*.jas
+*.ijvm
+venv

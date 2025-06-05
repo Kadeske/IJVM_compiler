@@ -17,12 +17,22 @@ def controlla_errore_sintassi(line, anonim):
 
     if "else" in line:
         if not "{" in line:
-            print("ERRORE --> { mancante in else" if not anonim else "!!{")
+            print("ERRORE --> { mancante in else" if not anonim else "!!{else")
         if not "}" in line:
-            print ("ERRORE --> } mancante in else" if not anonim else "!!}")
+            print ("ERRORE --> } mancante in else" if not anonim else "!!}else")
+    if "if" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in if" if not anonim else "!!{if")
+    if "for" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in for" if not anonim else "!!{for")
+    if "while" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in while" if not anonim else "!!{while")
+    
 
     if "int" in line and not "print" in line:
-        print("ERRORE -->  'int' non accettato" if not anonim else "!! -> int")
+        print("ERRORE -->  'int' non accettato, rimuovilo" if not anonim else "!! -> int")
 
 
 def genera_albero(espressione):
@@ -149,11 +159,11 @@ def getCondition(s, label):
         var1 = s[0].strip("(")
         var2 = s[1].strip(")")
 
-    res += '\n'.join(compila_ijvm(f"{var1}-({var2})".strip())) + "\n"
+    res += '\n'.join(compila_ijvm(f"({var1})-({var2})".strip())) + "\n"
 
     if oper == "==":
         res+= f"IFLT {label}\n"
-        res+='\n'.join(compila_ijvm(f"{var2}-({var1})".strip())) + "\n"
+        res+='\n'.join(compila_ijvm(f"({var2})-({var1})".strip())) + "\n"
         res+= f"IFLT {label}\n"
 
     else:
@@ -170,6 +180,8 @@ def compila_corpo(lines, next_tag, anonim):
     opened = []
     struct_opened =[]
     struct_opened_cond = []
+
+    elenco_etichette = {}
 
 
     code = []
@@ -197,6 +209,8 @@ def compila_corpo(lines, next_tag, anonim):
             order.append(f"{prec}C{act}:")
 
         if '{' in l:
+
+            elenco_etichette[next_tag] = getStruct(l)
 
             if "(" in l:
                 cond = l[l.index("("):l.index(")")+1]
@@ -245,6 +259,19 @@ def compila_corpo(lines, next_tag, anonim):
             order.extend(compila_ijvm(tmp.strip()))
             order.append("INVOKEVIRTUAL print")
 
+
+
+    cp_order = order.copy()
+    order = []
+
+    #scorre e cambia nomi alle etichette 
+    key_etichette = elenco_etichette.keys()
+
+    for o in cp_order:
+        for k in key_etichette: 
+            o = o.replace(f"O{k}", f"{elenco_etichette[k]}{k}")
+            o = o.replace(f"C{k}", f"fine_{elenco_etichette[k]}{k}")
+        order.append(o)
 
     return order
 
