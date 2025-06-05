@@ -100,6 +100,8 @@ def getStruct(s):
         return "if"
     elif "else" in s:
         return "else"
+    elif "do" in s:
+        return "do"
     else:
         return ""
     
@@ -202,6 +204,9 @@ def compila_corpo(lines, next_tag, anonim):
                 prec = f"\n{'\n'.join(getArithmetic(cond[2][:cond[2].index(")")].strip()))}\nGOTO O{act}\n"        # DA FINIRE
             elif "else" in l:
                 prec = f"GOTO C{next_tag}\n"
+            elif st == "do":
+                cond = l[l.index("("):l.index(")")+1]
+                prec = f"{getCondition(cond, f"O{act}")}"
 
             else:
                 prec = ""
