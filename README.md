@@ -89,38 +89,39 @@ Ancora ancora uguale a c:
 
 #### esempio di input valido:<br>
 
-fun1(a, b){
-2 i=b+2;
-3 while(a+3<i){
-4 while(a*2<b){
-5 a = a%b;
-6 }
-7 i++;
-8 }
-9 return a*i;
-10 }
-11
-12 fun2(x, y){
-13 for(i=6;i>1;i++){
-14 x = y*x/4;
-15 i-=2;
-16 }
-17
-18 if (x>y){
-19 y = y*3;
-20 }else{
-22 y = y*2;
-23 }
-24 return x%y;
-25 }
-26
-27 main() {
-28 input a;
-29 input b;
-30 input c;
-31
-32 print(fun1(a,b) % fun2(a,b+c));
-33 }
+    fun1(a, b){
+    2 i=b+2;
+    3 while(a+3<i){
+    4 while(a*2<b){
+    5 a = a%b;
+	6 }
+	7 i++;
+	8 }
+	9 return a*i;
+	10 }
+	11
+	12 fun2(x, y){
+	13 for(i=6;i>1;i++){
+	14 x = y*x/4;
+	15 i-=2;
+	16 }
+	17
+	18 if (x>y){
+	19 y = y*3;
+	20 }else{
+	22 y = y*2;
+	23 }
+	24 return x%y;
+	25 }
+	26
+	27 main() {
+	28 input a;
+	29 input b;
+	30 input c;
+	31
+	32 print(fun1(a,b) % fun2(a,b+c));
+	33 }
+
 
 
   
