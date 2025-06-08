@@ -145,6 +145,8 @@ def getOper(s):
         return ">"
     elif "==" in s:
         return "=="
+    elif "!=" in s:
+        return "!="
     else:
         return None
     
@@ -167,7 +169,8 @@ def getCondition(s, label):
         res+= f"IFLT {label}\n"
         res+='\n'.join(compila_ijvm(f"({var2})-({var1})".strip())) + "\n"
         res+= f"IFLT {label}\n"
-
+    elif oper == "!=":
+        res+=f"IFEQ {label}\n"
     else:
         if not "=" in oper:
             res+="DUP\n"

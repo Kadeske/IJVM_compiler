@@ -27,6 +27,8 @@ I numeri ad inizio riga vengono **eliminati**, così da poter copiare da un pdf.
 
 NON devono essere presenti tipi di nessun genere: "int i" darà problemi, cancella "int"
 
+Le variabili DEVONO essere **monocarattere**, niente numeri o caratteri speciali.
+
 ## Costrutti
 	Le posizione e la presenza delle parentesi graffe è ESSENZIALE.
 	Quando un costrutto viene aperto le parentesi graffe sono necessarie, in particolare vanno aperte nella stessa riga dell'inizio del costrutto:
@@ -47,7 +49,8 @@ NON devono essere presenti tipi di nessun genere: "int i" darà problemi, cancel
     if(condizione){
 	//corpo vero
 	}else{
-	//corpo falso}
+	//corpo falso
+    }
 
 **attenzione**: l'else deve avere nella stessa riga parentesi chiusa e aperta INSIEME, come nell'esempio
 
