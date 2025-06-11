@@ -29,6 +29,10 @@ def controlla_errore_sintassi(line, anonim):
     if "while" in line:
         if not "{" in line:
             print("ERRORE --> { mancante in while" if not anonim else "!!{while")
+    if "&&" in line: 
+            print("ERRORE --> && non è gestito, per && usa if annidati"if not anonim else "!!&&")
+    if "||" in line: 
+            print("ERRORE -->  || non è gestito, per || dividi in 2 condizioni separate"if not anonim else "!!||")
     
 
     if "int" in line and not "print" in line:

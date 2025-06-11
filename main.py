@@ -71,6 +71,7 @@ def compila_funzione(func_name, func_param, func_lines, anonim):
     if func_name != "main":
         code.append(".end-method")
     else:
+        code.append("HALT")
         code.append(".end-main")
 
     return code
