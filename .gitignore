@@ -3,3 +3,4 @@ __pycache__
 *.jas
 *.ijvm
 venv
+testing

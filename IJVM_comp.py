@@ -329,7 +329,7 @@ def carica_impostazioni():
 
     sett = [x.strip() for x in inp.readlines()]
 
-    sett = clean(sett)
+    sett = clean(sett, False)
 
     for s in sett:
         tmp = s.split("=")

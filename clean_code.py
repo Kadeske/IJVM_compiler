@@ -1,25 +1,29 @@
-def clean(code):
+import re 
+def clean(code, isCode = True):
+    pattern = r'\bint\b\s+\w+'
 
-    banned = [ "float", "double"]
 
     #spazi, virgola(tranne nel for), numeri iniziali
     new_code = []
     for c in code:
         tmp = c.strip()
 
-        if not "for" in tmp:
-            tmp = tmp.strip(";")
-        
-        while tmp != "" and tmp[0].isnumeric():
-            tmp = tmp[1:]    
-        
-        tmp = tmp.replace(" ", "")
+        if isCode:
+            if not "for" in tmp:    #toglie le virgole, a meno che non sia un for, in quel caso servono
+                tmp = tmp.strip(";")
+            
+            while tmp != "" and tmp[0].isnumeric(): #toglie i numeri all'inizio di ogni riga
+                tmp = tmp[1:]    
+            
+            if re.search(pattern, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
+                tmp = tmp.replace("int","")
 
-        for b in banned:
-            tmp = tmp.replace(b, "")
+
+        tmp = tmp.replace(" ", "")      #toglie ogni spazio
+
     
         new_code.append(tmp)
     
-
+    print (new_code)
     return new_code
     
