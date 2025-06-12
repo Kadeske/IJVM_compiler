@@ -1,4 +1,14 @@
 [start_id] = 0
 [output_path] = "out.txt"
+[error_log_path] = "error.txt"
+
 [override_input_request] = true
 [default_input_path] = "input.txt"
+
+[always_on] = true 
+[seconds_between_checks] = 1
+
+[load_template] = true 
+[template_path] = "template.txt"
+[template_symbol_insertion] = "<-->"
+

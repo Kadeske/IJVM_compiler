@@ -1,6 +1,6 @@
 import ast
 import re
-from clean_code import clean
+from utils import *
 import subprocess
 import platform
 
@@ -312,51 +312,6 @@ def clear_terminal():
         subprocess.run("cls", shell=True)
     else:
         subprocess.run("clear", shell=True)
-
-def carica_impostazioni():
-    start_id = 0 
-    output_path = "out.txt" 
-    override_input_request = False
-    default_input_path = "input.txt" 
-    instr = {
-        'start_id': start_id,
-        'output_path' : output_path,
-        'override_input_request': override_input_request,
-        'default_input_path' : default_input_path
-    }
-
-    inp = open("settings.sett")
-
-    sett = [x.strip() for x in inp.readlines()]
-
-    sett = clean(sett, False)
-
-    for s in sett:
-        tmp = s.split("=")
-        tmp[0] = tmp[0].strip().replace("[","").replace("]", "")
-        tmp[1] = tmp[1].strip().replace('"', "").replace("'", '')
-
-        if isinstance(instr[tmp[0]], bool):
-            value = tmp[1].lower() in ('true', '1', 'yes', 'y', 't')
-        elif isinstance(instr[tmp[0]], int):
-            value = int(tmp[1])
-        elif isinstance(instr[tmp[0]], str):
-            value = str(tmp[1])
-
-        instr[tmp[0]] = value
-
-
-    #riassegno i valori
-    start_id = instr['start_id']
-    output_path = instr['output_path']
-    override_input_request = instr['override_input_request']
-    default_input_path = instr['default_input_path']
-
-
-
-    inp.close()
-    return start_id, output_path, override_input_request, default_input_path
-
 
 
 '''

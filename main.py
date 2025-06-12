@@ -1,8 +1,5 @@
-from IJVM_comp import clear_terminal, clean, carica_impostazioni, elenca_variabili, compila_corpo
-
-#carica impostazioni globali
-start_id, output_path, override_input_request, default_input_path = carica_impostazioni()
-
+from IJVM_comp import *
+import time 
 
 def separa_metodi(lines):
     func_lines = {}
@@ -58,14 +55,18 @@ def compila_funzione(func_name, func_param, func_lines, anonim):
         code.append(".main")
 
     #inserimento variabili non presenti tra i parametri
-    code.append(".var")
-    code.extend(elenco_var)
-    code.append(".end-var")
+    if len(elenco_var) > 0:
+        code.append(".var")
+        code.extend(elenco_var)
+        code.append(".end-var")
 
     #inserimento corpo della funzione
 
-    code.extend(compila_corpo(func_lines,start_id, anonim))
-
+    try:
+        code.extend(compila_corpo(func_lines,global_data['start_id'], anonim))
+    except Exception:
+        addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo{func_name}")
+        
 
     #chiusura metodo
     if func_name != "main":
@@ -78,37 +79,9 @@ def compila_funzione(func_name, func_param, func_lines, anonim):
 
     
 
-        
-    
-
-
-
-def main():
+def compila_input(input_path, anonim):
 
     code = []
-    
-    #richiesta modalità anonima
-    anonim = input("Mod anonima? [1 = si altro = no]")
-
-
-    if anonim:  #cancella la domandas
-        clear_terminal()
-
-
-    #richiedi/recupera path input
-    if override_input_request == False:
-        input_path = input("Inserisci il percorso del file contenente lo pseudocidice: "if not anonim else ">")
-    else:
-        input_path = str(default_input_path)
-
-    #controlla esistenza file
-    try:
-        open(input_path, "r")
-    except FileNotFoundError:
-        print(f"Il file ({input_path}) non esiste" if not anonim else "!")  
-        return
-
-
 
     #prendi input dati e pulisci
     inp = open(input_path, "r")
@@ -123,7 +96,11 @@ def main():
 
 
     #dividi codice per metodi
-    func_parameters, func_lines = separa_metodi(lines)
+    try:
+        func_parameters, func_lines = separa_metodi(lines)
+    except Exception:
+        addError(global_data['error_log_path'], "Errore inaspettato nel riconoscimento delle funzioni, prova a ricontrollare firme e chiusure delle funzioni")
+        return
 
 
     #identifica main e mettilo per primo
@@ -139,14 +116,62 @@ def main():
 
 
     #apri file output
-    out = open(output_path, "w+")
+    out = open(global_data['output_path'], "w+")
     for c in code:
         if not anonim:
             print(c)
         out.write(f"{c}\n")
     out.close()
 
-    print(f"\n\nDUMP FATTO IN {output_path}" if not anonim else "<<")
+    print(f"\n\nDUMP FATTO IN {global_data['output_path']}" if not anonim else "<<")
 
+    
+
+
+
+def main():
+
+    #cancella vecchio log / lo crea se non esiste
+    open(global_data['error_log_path'], "w+")
+
+
+    
+    #richiesta modalità anonima
+    anonim = input("Mod anonima? [1 = si altro = no]")
+
+
+    if anonim:  #cancella la domandas
+        clear_terminal()
+
+
+    #richiedi/recupera path input
+    if global_data['override_input_request'] == False:
+        input_path = input("Inserisci il percorso del file contenente lo pseudocidice: "if not anonim else ">")
+    else:
+        input_path = str(global_data['default_input_path'])
+
+    #controlla esistenza file
+    try:
+        open(input_path, "r")
+    except FileNotFoundError:
+        print(f"Il file ({input_path}) non esiste" if not anonim else "!")  
+        return
+
+
+    if global_data['always_on']:
+        #controlla nel tempo se il file nel path specificato viene modificato
+        old_hash = get_file_hash(input_path)
+        while True:
+            if old_hash != get_file_hash(input_path):
+                compila_input(input_path, anonim)
+                old_hash = get_file_hash(input_path)
+            time.sleep(global_data['seconds_between_checks'])
+    else:
+        compila_input(input_path, anonim)
+
+
+
+
+    
 if __name__ == "__main__":
     main()
