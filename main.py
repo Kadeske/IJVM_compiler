@@ -1,132 +1,6 @@
 from IJVM_comp import *
 import time 
 
-def separa_metodi(lines):
-    func_lines = {}
-    func_parameters = {}
-
-    while lines[0] == '':
-        lines = lines[1:]   #tolgo le linee vuote
-
-    #primo posto non vuoto sarà la prima firma peffò
-    opened = 0
-    closed = 0
-    for l in lines:
-        if abs(opened - closed) == 0 and l != '':
-            tmp_code = []
-            tmp = l.split("(")
-            func_name = tmp[0].replace("(","")
-            tmp[1] = tmp[1].replace(")","").replace("{","")
-            func_var = [v for v in tmp[1].split(",")]
-        
-
-        tmp_code.append(l)
-
-        if "{" in l:
-            opened += 1
-        if "}" in l:
-            closed += 1
-            if abs(opened - closed) == 0:
-                tmp_code = tmp_code[1:-1]
-                func_lines[func_name] = tmp_code.copy()
-                func_parameters[func_name] = func_var
-                tmp_code = []
-
-
-
-        
-
-
-    
-    return func_parameters, func_lines
-    
-
-def compila_funzione(func_name, func_param, func_lines, anonim):
-
-    code = []
-    elenco_var = elenca_variabili(func_lines)
-    for x in func_param:
-        elenco_var.remove(x)
-
-    #apertura metodo
-    if func_name != "main":
-        code.append(f".method {func_name}({','.join(func_param)})")
-    else:
-        code.append(".main")
-
-    #inserimento variabili non presenti tra i parametri
-    if len(elenco_var) > 0:
-        code.append(".var")
-        code.extend(elenco_var)
-        code.append(".end-var")
-
-    #inserimento corpo della funzione
-
-    try:
-        code.extend(compila_corpo(func_lines,global_data['start_id'], anonim))
-    except Exception:
-        addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo{func_name}")
-        
-
-    #chiusura metodo
-    if func_name != "main":
-        code.append(".end-method")
-    else:
-        code.append("HALT")
-        code.append(".end-main")
-
-    return code
-
-    
-
-def compila_input(input_path, anonim):
-
-    code = []
-
-    #prendi input dati e pulisci
-    inp = open(input_path, "r")
-
-    lines = [x.strip() for x in inp.readlines()]
-
-    lines = clean(lines)
-
-    inp.close()
-
-    
-
-
-    #dividi codice per metodi
-    try:
-        func_parameters, func_lines = separa_metodi(lines)
-    except Exception:
-        addError(global_data['error_log_path'], "Errore inaspettato nel riconoscimento delle funzioni, prova a ricontrollare firme e chiusure delle funzioni")
-        return
-
-
-    #identifica main e mettilo per primo
-    func_keys = list(func_lines.keys())
-
-    if "main" in func_keys:
-        code.extend(compila_funzione("main", [], func_lines["main"], anonim))
-        func_keys.remove("main")
-    #per ogni metodo compila corpo
-    
-    for k in func_keys:
-        code.extend(compila_funzione(k, func_parameters[k], func_lines[k],anonim))
-
-
-    #apri file output
-    out = open(global_data['output_path'], "w+")
-    for c in code:
-        if not anonim:
-            print(c)
-        out.write(f"{c}\n")
-    out.close()
-
-    print(f"\n\nDUMP FATTO IN {global_data['output_path']}" if not anonim else "<<")
-
-    
-
 
 
 def main():
@@ -134,8 +8,6 @@ def main():
     #cancella vecchio log / lo crea se non esiste
     open(global_data['error_log_path'], "w+")
 
-
-    
     #richiesta modalità anonima
     anonim = input("Mod anonima? [1 = si altro = no]")
 
@@ -158,16 +30,20 @@ def main():
         return
 
 
-    if global_data['always_on']:
-        #controlla nel tempo se il file nel path specificato viene modificato
-        old_hash = get_file_hash(input_path)
-        while True:
-            if old_hash != get_file_hash(input_path):
-                compila_input(input_path, anonim)
-                old_hash = get_file_hash(input_path)
-            time.sleep(global_data['seconds_between_checks'])
-    else:
-        compila_input(input_path, anonim)
+
+    try:
+        if global_data['always_on']:
+            #controlla nel tempo se il file nel path specificato viene modificato
+            old_hash = get_file_hash(input_path)
+            while True:
+                if old_hash != get_file_hash(input_path):
+                    compila_input(input_path, anonim)
+                    old_hash = get_file_hash(input_path)
+                time.sleep(global_data['seconds_between_checks'])
+        else:
+            compila_input(input_path, anonim)
+    except:
+        addError(global_data["error_log_path"], "Errore inaspettato e sconosciuto, arriva da 'compila_input()")
 
 
 

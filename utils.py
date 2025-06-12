@@ -1,7 +1,16 @@
 import re 
 import hashlib
 from datetime import *
+import subprocess
+import platform
 
+
+
+def clear_terminal():
+    if platform.system() == "Windows":
+        subprocess.run("cls", shell=True)
+    else:
+        subprocess.run("clear", shell=True)
 
 
 def get_file_hash(filename):
@@ -48,6 +57,57 @@ def clean(code, isCode = True):
     
     return new_code
     
+
+def getStruct(s):
+    if "while" in s:
+        return "while"
+    elif "for" in s:
+        return "for"
+    elif "if" in s:
+        return "if"
+    elif "else" in s:
+        return "else"
+    elif "do" in s:
+        return "do"
+    else:
+        return ""
+    
+
+def controlla_errore_sintassi(line, anonim):
+
+    if "else" in line:
+        if "if" in line:
+            print("ERRORE-> else e if non devono stare nella stessa riga" if not anonim else "!!else if")
+            addError(global_data['error_log_path'], f"Attenzione! -> else e if non devono stare nella stessa riga")
+        if not "{" in line:
+            print("ERRORE --> { mancante in else" if not anonim else "!!{else")
+            addError(global_data['error_log_path'], "Attenzione! -> { mancante in else")
+        if not "}" in line:
+            print ("ERRORE --> } mancante in else" if not anonim else "!!}else")
+            addError(global_data['error_log_path'], "Attenzione! -> } mancante in else")
+    if "if" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in if" if not anonim else "!!{if")
+            addError(global_data['error_log_path'], "Attenzione! -> { mancante in if")
+
+    if "for" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in for" if not anonim else "!!{for")
+            addError(global_data['error_log_path'], "Attenzione! -> { mancante in for")
+
+    if "while" in line:
+        if not "{" in line:
+            print("ERRORE --> { mancante in while" if not anonim else "!!{while")
+            addError(global_data['error_log_path'], "Attenzione! -> { mancante in while")
+
+    if "&&" in line: 
+            print("ERRORE --> && non è gestito, per && usa if annidati"if not anonim else "!!&&")
+            addError(global_data['error_log_path'], "Attenzione! -> && non è gestito, per && usa if annidati")
+
+    if "||" in line: 
+            print("ERRORE -->  || non è gestito, per || dividi in 2 condizioni separate"if not anonim else "!!||")
+            addError(global_data['error_log_path'], "Attenzione! -> || non è gestito, per || dividi in 2 condizioni separate")
+
 
 
 

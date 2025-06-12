@@ -1,5 +1,5 @@
 [start_id] = 0
-[output_path] = "out.txt"
+[output_path] = "out.jas"
 [error_log_path] = "error.txt"
 
 [override_input_request] = true

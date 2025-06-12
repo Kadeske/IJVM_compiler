@@ -1,8 +1,6 @@
 import ast
 import re
 from utils import *
-import subprocess
-import platform
 
 #non è per nienete ordinato nè ottimizzato, è già troppo se l'ho fatto
 #Tutto per l'agguato alla spigola
@@ -12,31 +10,6 @@ import platform
     < * ))     ,       ( 
       `*-._`._(__.--*"`.\
 """
-
-def controlla_errore_sintassi(line, anonim):
-
-    if "else" in line:
-        if not "{" in line:
-            print("ERRORE --> { mancante in else" if not anonim else "!!{else")
-        if not "}" in line:
-            print ("ERRORE --> } mancante in else" if not anonim else "!!}else")
-    if "if" in line:
-        if not "{" in line:
-            print("ERRORE --> { mancante in if" if not anonim else "!!{if")
-    if "for" in line:
-        if not "{" in line:
-            print("ERRORE --> { mancante in for" if not anonim else "!!{for")
-    if "while" in line:
-        if not "{" in line:
-            print("ERRORE --> { mancante in while" if not anonim else "!!{while")
-    if "&&" in line: 
-            print("ERRORE --> && non è gestito, per && usa if annidati"if not anonim else "!!&&")
-    if "||" in line: 
-            print("ERRORE -->  || non è gestito, per || dividi in 2 condizioni separate"if not anonim else "!!||")
-    
-
-    if "int" in line and not "print" in line:
-        print("ERRORE -->  'int' non accettato, rimuovilo" if not anonim else "!! -> int")
 
 
 def genera_albero(espressione):
@@ -95,26 +68,10 @@ def compila_ijvm(espressione):
     codice = traduci_in_ijvm(albero)
     return codice
 
-def getStruct(s):
-    if "while" in s:
-        return "while"
-    elif "for" in s:
-        return "for"
-    elif "if" in s:
-        return "if"
-    elif "else" in s:
-        return "else"
-    elif "do" in s:
-        return "do"
-    else:
-        return ""
-    
+
 def getArithmetic(s):
-
-    # a = b * (a+b)
-    # a = b * 4 / 2 
-
     
+    #trasforma la sintassi accorciata di incrementi e decrementi in operazioni normali es a++ -> a = a + 1
     if "+=" in s:
         tmp = s.split("+=")
         s = f"{tmp[0].strip()} = {tmp[0].strip()} + {tmp[1].strip()}"
@@ -128,10 +85,11 @@ def getArithmetic(s):
         tmp = s.split("--")
         s = f"{tmp[0].strip()} = {tmp[0].strip()} -1"
     
-    s = s.split("=")
+    s = s.split("=")    #divide per l'uguale in modo da capire chi riceve l'operazione
 
-    res = compila_ijvm(s[1].strip())
+    res = compila_ijvm(s[1].strip())    #trasformo l'operazione dopo l'uguale
 
+    #Rimetto il risultato dell'operazione nel left value, controllando che sia una variabile
     for i in s[0]:
         if i.isalnum():
             res.append(f"ISTORE {i}")
@@ -307,21 +265,160 @@ def elenca_variabili(lines):
 
 
     
-def clear_terminal():
-    if platform.system() == "Windows":
-        subprocess.run("cls", shell=True)
+def separa_metodi(lines):
+    func_lines = {}
+    func_parameters = {}
+
+    while lines[0] == '':
+        lines = lines[1:]   #tolgo le linee vuote
+
+    #primo posto non vuoto sarà la prima firma peffò
+    opened = 0
+    closed = 0
+    for l in lines:
+        if abs(opened - closed) == 0 and l != '':
+            tmp_code = []
+            tmp = l.split("(")
+            func_name = tmp[0].replace("(","")
+            tmp[1] = tmp[1].replace(")","").replace("{","")
+            func_var = [v for v in tmp[1].split(",")]
+        
+
+        tmp_code.append(l)
+
+        if "{" in l:
+            opened += 1
+        if "}" in l:
+            closed += 1
+            if abs(opened - closed) == 0:
+                tmp_code = tmp_code[1:-1]
+                func_lines[func_name] = tmp_code.copy()
+                func_parameters[func_name] = func_var
+                tmp_code = []
+
+    return func_parameters, func_lines
+    
+
+
+
+def compila_funzione(func_name, func_param, func_lines, anonim):
+
+    code = []
+    elenco_var = elenca_variabili(func_lines)
+    for x in func_param:
+        elenco_var.remove(x)
+
+    #apertura metodo
+    if func_name != "main":
+        code.append(f".method {func_name}({','.join(func_param)})")
     else:
-        subprocess.run("clear", shell=True)
+        code.append(".main")
+
+    #inserimento variabili non presenti tra i parametri
+    if len(elenco_var) > 0:
+        code.append(".var")
+        code.extend(elenco_var)
+        code.append(".end-var")
+
+    #inserimento corpo della funzione
+
+    try:
+        code.extend(compila_corpo(func_lines,global_data['start_id'], anonim))
+    except Exception:
+        addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo{func_name}")
+        
+
+    #chiusura metodo
+    if func_name != "main":
+        code.append(".end-method")
+    else:
+        code.append("HALT")
+        code.append(".end-main")
+
+    return code
+
+    
+
+def compila_input(input_path, anonim):
+
+    code = []
+
+    #prendi input dati e pulisci
+    inp = open(input_path, "r")
+
+    lines = [x.strip() for x in inp.readlines()]
+
+    lines = clean(lines)
+
+    inp.close()
+
+    
 
 
-'''
-inp = open("comp_py/test.txt", "r")
+    #dividi codice per metodi
+    try:
+        func_parameters, func_lines = separa_metodi(lines)
+    except Exception:
+        addError(global_data['error_log_path'], "Errore inaspettato nel riconoscimento delle funzioni, prova a ricontrollare firme e chiusure delle funzioni")
+        return
 
-lines = [x.strip() for x in inp.readlines()]
 
-lines = clean(lines)
+    #identifica main e mettilo per primo
+    func_keys = list(func_lines.keys())
 
-inp.close()
+    if "main" in func_keys:
+        code.extend(compila_funzione("main", [], func_lines["main"], anonim))
+        func_keys.remove("main")
+    #per ogni metodo compila corpo
+    
+    for k in func_keys:
+        code.extend(compila_funzione(k, func_parameters[k], func_lines[k],anonim))
 
-print(compila_corpo(lines, 0))
-'''
+
+    #apri file output
+    out = open(global_data['output_path'], "w+")
+    writed = False
+
+
+    #controllo se inserire il template 
+    if global_data['load_template']:
+        #controllo che il template esista
+        try:
+            open(global_data['template_path'], "r")
+        except:
+            addError(global_data['error_log_path'], f"Template non trovato nella path '{global_data['template_path']}'")
+        else:
+            #controllo che sia presente il segnaposto in cui inserire il programma
+            if global_data['template_symbol_insertion'] not in open(global_data['template_path'], "r").read():
+                addError(global_data['error_log_path'], f"Non trovato il punto di inserimento del programma, '{global_data['template_symbol_insertion']}'")
+            else:
+                #inserisco primo pezzo template (fino al simbolo scelto)
+                template = open(global_data['template_path'], "r")
+                template_lines = [x.strip() for x in template.readlines()]
+                for tl in template_lines:
+                    if global_data['template_symbol_insertion'] not in tl:
+                        out.write(f"{tl}\n")
+                    else:
+                        for c in code:
+                            if not anonim:
+                                print(c)
+                            out.write(f"{c}\n")
+                writed = True
+    
+    # se per qualche motivo non è stato possibile finire la scirttura con il template
+    #riscrivo ma senza il template
+    if not writed:
+        out.close()
+        out = open(global_data['output_path'], "w+")    #così è obbligato a resettarlo
+        for c in code:
+            if not anonim:
+                print(c)
+            out.write(f"{c}\n")
+
+    
+    out.close()
+
+    print(f"\n\nDUMP FATTO IN {global_data['output_path']}" if not anonim else "<<")
+
+    
+
