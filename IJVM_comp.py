@@ -150,8 +150,9 @@ def compila_corpo(lines, next_tag, anonim):
 
     elenco_etichette = {}
 
-
     code = []
+
+    lines = modifica_else_if(lines)
 
     for l in lines:
 
@@ -348,7 +349,7 @@ def compila_input(input_path, anonim):
 
     lines = [x.strip() for x in inp.readlines()]
 
-    lines = clean(lines)
+    lines = clean(lines, True)
 
     inp.close()
 

@@ -26,6 +26,55 @@ def addError(error_log_path, error_message):
     err.close()
 
 
+
+def getStruct(s):
+    if "while" in s:
+        return "while"
+    elif "for" in s:
+        return "for"
+    elif "if" in s:
+        if "else" in s:
+            return "else_if"
+        else:
+            return "if"
+    elif "else" in s:
+        return "else"
+    elif "do" in s:
+        return "do"
+    else:
+        return ""
+    
+
+    #moficca gli else if, li separa in if con all'interno degli else annidati
+def modifica_else_if(code):
+    n_elif = 0
+    isElse_if = False
+    new_code = []
+    for c in code:
+
+        if getStruct(c) == "else_if":
+            n_elif += 1
+            isElse_if = True
+            tmp_else = c[0:c.index("if")]
+            tmp_if = c[c.index("if"):]
+
+            tmp_else += "{"
+
+            new_code.append(tmp_else)
+            new_code.append(tmp_if)
+
+        elif isElse_if and "}" in c and getStruct(c) == "":
+            for _ in range(n_elif+1):
+                new_code.append("}")
+
+        else:
+            new_code.append(c)
+
+    
+    return new_code
+
+
+
 def clean(code, isCode = True):
     pattern = r'\bint\b\s+\w+'
 
@@ -36,6 +85,10 @@ def clean(code, isCode = True):
         tmp = c.strip()
 
         if isCode:
+            #toglie eventuali commenti
+            if "//" in tmp:
+                tmp = tmp[0:tmp.index("//")]
+
             if not "for" in tmp:    #toglie le virgole, a meno che non sia un for, in quel caso servono
                 tmp = tmp.strip(";")
             
@@ -45,32 +98,12 @@ def clean(code, isCode = True):
             if re.search(pattern, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
                 tmp = tmp.replace("int","")
 
-            #toglie eventuali commenti
-            if "//" in tmp:
-                tmp = tmp[0:tmp.index("//")]
-
 
         tmp = tmp.replace(" ", "")      #toglie ogni spazio
 
-    
         new_code.append(tmp)
     
     return new_code
-    
-
-def getStruct(s):
-    if "while" in s:
-        return "while"
-    elif "for" in s:
-        return "for"
-    elif "if" in s:
-        return "if"
-    elif "else" in s:
-        return "else"
-    elif "do" in s:
-        return "do"
-    else:
-        return ""
     
 
 def controlla_errore_sintassi(line, anonim):
