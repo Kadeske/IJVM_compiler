@@ -73,7 +73,27 @@ def modifica_else_if(code):
     
     return new_code
 
+def modifica_graffe_struct(code):
 
+    new_code = []
+    for c in code:
+        tmp = c
+        if getStruct(tmp) == "" and "{" in tmp:
+            tmp = tmp.replace("{", "")
+
+        elif getStruct(tmp) in ["if", "for", "while", "else", "else_if"] and not "{" in tmp:
+            tmp = tmp + "{"
+
+        elif getStruct(tmp) == "" and  "}" in tmp and len(tmp) > 1:
+            print (tmp)
+            tmp = tmp.replace("}", "")
+            new_code.append(tmp)
+            tmp = "}"
+
+        new_code.append(tmp)
+
+
+    return new_code
 
 def clean(code, isCode = True):
     pattern = r'\bint\b\s+\w+'
@@ -90,7 +110,7 @@ def clean(code, isCode = True):
                 tmp = tmp[0:tmp.index("//")]
 
             if not "for" in tmp:    #toglie le virgole, a meno che non sia un for, in quel caso servono
-                tmp = tmp.strip(";")
+                tmp = tmp.replace(";", "")
             
             while tmp != "" and tmp[0].isnumeric(): #toglie i numeri all'inizio di ogni riga
                 tmp = tmp[1:]    
@@ -198,8 +218,39 @@ def carica_impostazioni():
     return instr
 
 
+def indent_code(code_lines):
+    indented_lines = []
+    indent_level = 1
+   
+    print(code_lines)
+
+    for line in code_lines:
+        tmp = None 
+        if "LDC_W" in line:
+            tmp = f"{'\t'*indent_level}{line}"
+            indent_level += 1
+        if "INVOKEVIRTUAL" in line:
+            indent_level -= 1
+            tmp = f"{'\t'*indent_level}{line}"
+        if "O" in line and ":" in line:
+            tmp = f"{'\t'*indent_level}{line}"
+            indent_level += 1
+        if  "C" in line and ":" in line:
+            indent_level -= 1
+            tmp = f"{'\t'*indent_level}{line}"
+            
+        if tmp == None:
+            tmp = f"{'\t'*indent_level}{line}"
+
+
+        indented_lines.append(tmp)
+            
+    return indented_lines
+
 
 
 #carica impostazioni globali
 global_data = carica_impostazioni()
+
+
 

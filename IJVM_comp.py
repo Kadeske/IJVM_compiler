@@ -152,7 +152,9 @@ def compila_corpo(lines, next_tag, anonim):
 
     code = []
 
+    lines = modifica_graffe_struct(lines)
     lines = modifica_else_if(lines)
+
 
     for l in lines:
 
@@ -230,7 +232,7 @@ def compila_corpo(lines, next_tag, anonim):
             order.extend(compila_ijvm(tmp.strip()))
             order.append("INVOKEVIRTUAL print")
 
-
+    order = indent_code(order)
 
     cp_order = order.copy()
     order = []
@@ -238,11 +240,13 @@ def compila_corpo(lines, next_tag, anonim):
     #scorre e cambia nomi alle etichette 
     key_etichette = elenco_etichette.keys()
 
+
     for o in cp_order:
         for k in key_etichette: 
             o = o.replace(f"O{k}", f"{elenco_etichette[k]}{k}")
             o = o.replace(f"C{k}", f"fine_{elenco_etichette[k]}{k}")
         order.append(o)
+
 
     return order
 
@@ -263,7 +267,6 @@ def elenca_variabili(lines):
     elenco_lett = list(set(elenco_lett))
 
     return elenco_lett
-
 
     
 def separa_metodi(lines):
@@ -326,7 +329,7 @@ def compila_funzione(func_name, func_param, func_lines, anonim):
     try:
         code.extend(compila_corpo(func_lines,global_data['start_id'], anonim))
     except Exception:
-        addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo{func_name}")
+        addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo {func_name}")
         
 
     #chiusura metodo
@@ -422,4 +425,7 @@ def compila_input(input_path, anonim):
     print(f"\n\nDUMP FATTO IN {global_data['output_path']}" if not anonim else "<<")
 
     
+
+
+
 
