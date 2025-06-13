@@ -95,7 +95,7 @@ def modifica_graffe_struct(code):
 
     return new_code
 
-def clean(code, isCode = True):
+def clean(code, isCode = True, removeInitNumbers = True, removeSpaces = True):
     pattern_int = r'\bint\b\s+\w+'
     pattern_void = r'\bvoid\b\s+\w+'
 
@@ -103,7 +103,11 @@ def clean(code, isCode = True):
     #spazi, virgola(tranne nel for), numeri iniziali
     new_code = []
     for c in code:
-        tmp = c.strip()
+        tmp = c
+
+        if removeInitNumbers:
+            while tmp != "" and tmp[0].isnumeric(): #toglie i numeri all'inizio di ogni riga
+                    tmp = tmp[1:]    
 
         if isCode:
             #toglie eventuali commenti
@@ -113,17 +117,14 @@ def clean(code, isCode = True):
             if not "for" in tmp:    #toglie le virgole, a meno che non sia un for, in quel caso servono
                 tmp = tmp.replace(";", "")
             
-            while tmp != "" and tmp[0].isnumeric(): #toglie i numeri all'inizio di ogni riga
-                tmp = tmp[1:]    
-            
             if re.search(pattern_int, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
                 tmp = tmp.replace("int","")
             
             if re.search(pattern_void, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
                 tmp = tmp.replace("void","")
 
-
-        tmp = tmp.replace(" ", "")      #toglie ogni spazio
+        if removeSpaces:
+            tmp = tmp.replace(" ", "")      #toglie ogni spazio
 
         new_code.append(tmp)
     
@@ -165,7 +166,9 @@ def controlla_errore_sintassi(line, anonim):
             print("ERRORE -->  || non è gestito, per || dividi in 2 condizioni separate"if not anonim else "!!||")
             addError(global_data['error_log_path'], "Attenzione! -> || non è gestito, per || dividi in 2 condizioni separate")
 
-
+    if "for" in line:
+        if len(line.split(";")) != 3:
+            addError(global_data['error_log_path'], "Errore: manca una condizione nel for, oppure hai usato una separatare che non è ';'")
 
 
 def carica_impostazioni():

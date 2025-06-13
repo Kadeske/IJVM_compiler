@@ -11,6 +11,8 @@ from utils import *
       `*-._`._(__.--*"`.\
 """
 
+pattern_variabile_valida = r'(?<!\S)[a-zA-Z_][a-zA-Z0-9_]*(?!\S=+-*/;,)'
+
 
 def genera_albero(espressione):
     return ast.parse(str(espressione), mode='eval').body
@@ -79,21 +81,28 @@ def getArithmetic(s):
         tmp = s.split("-=")
         s = f"{tmp[0].strip()} = {tmp[0].strip()} - {tmp[1].strip()}"
     elif "++" in s:
-        tmp = s.split("++")
-        s = f"{tmp[0].strip()} = {tmp[0].strip()} +1"
+        tmp = s.replace("++","")
+        if bool(re.fullmatch(pattern_variabile_valida, tmp)):
+            return [f"IINC {tmp.strip()} 1"]
+        else:
+            addError(global_data['error_log_path'], "Attenzione! utilizzo errato dell'operatore di inremento '++'")
     elif "--" in s:
-        tmp = s.split("--")
-        s = f"{tmp[0].strip()} = {tmp[0].strip()} -1"
+        tmp = s.replace("--","")
+        if bool(re.fullmatch(pattern_variabile_valida, tmp)):
+            return [f"IINC {tmp.strip()} -1"]
+        else:
+            addError(global_data['error_log_path'], "Attenzione! utilizzo errato dell'operatore di decremento '--'")
+
     
     s = s.split("=")    #divide per l'uguale in modo da capire chi riceve l'operazione
 
     res = compila_ijvm(s[1].strip())    #trasformo l'operazione dopo l'uguale
 
     #Rimetto il risultato dell'operazione nel left value, controllando che sia una variabile
-    for i in s[0]:
-        if i.isalnum():
-            res.append(f"ISTORE {i}")
+    if bool(re.fullmatch(pattern_variabile_valida, s[0])):
+            res.append(f"ISTORE {s[0]}")
 
+  
     return res 
 
 def getOper(s):
@@ -141,7 +150,7 @@ def getCondition(s, label):
             res+= f"IFEQ {label}\n"
     return res
     
-def compila_corpo(lines, next_tag, anonim):
+def compila_corpo(lines, next_tag, anonim, other_func_names):
 
     order = []
     opened = []
@@ -151,6 +160,8 @@ def compila_corpo(lines, next_tag, anonim):
     elenco_etichette = {}
 
     code = []
+
+    lines = clean(lines, True,True, True)
 
     lines = modifica_graffe_struct(lines)
     lines = modifica_else_if(lines)
@@ -175,7 +186,7 @@ def compila_corpo(lines, next_tag, anonim):
             elif st == "do":
                 if "while" in l:
                     cond = l[l.index("("):l.index(")")+1]
-                    prec = f"{getCondition(cond, f"O{act}")}"
+                    prec = f"{getCondition(cond, f"C{act}")}\nGOTO O{act}\n"
                 else:
                     addError(global_data['error_log_path'], f"Errore: la chiusura del do non coincide con il while associato")
 
@@ -218,12 +229,11 @@ def compila_corpo(lines, next_tag, anonim):
             for code_l in code:
                 order.append(code_l)
             order.append("IRETURN")
-
-        elif ("=" in l or "++" in l or "--" in l) and getStruct(l) == "":
+            #any([True if l in x else False for x in other_func_names])
+        elif ("=" in l or "++" in l or "--" in l ) and getStruct(l) == "":
             code = getArithmetic(l)
             for code_l in code:
                 order.append(code_l)
-
         elif "input" in l:
             tmp = l.split("input")
             order.append("LDC_W OBJREF")
@@ -234,6 +244,8 @@ def compila_corpo(lines, next_tag, anonim):
             tmp = l.replace("print", "")
             order.extend(compila_ijvm(tmp.strip()))
             order.append("INVOKEVIRTUAL print")
+        elif any([True if x in l else False for x in other_func_names]) and getStruct(l) == "":
+            order.extend(compila_ijvm(l))
 
 
     order = converti_all_lista(order)
@@ -258,7 +270,7 @@ def compila_corpo(lines, next_tag, anonim):
 def elenca_variabili(lines, other_func_names):
     words = ["for","while", "if", "else", "print", "input", "return", "fun", "do"]
     
-    elenco_lett = []
+    elenco_parole = []
 
     for f in other_func_names:
         lines = [l.replace(f,"") for l in lines]
@@ -267,13 +279,11 @@ def elenca_variabili(lines, other_func_names):
         lines = [l.replace(w,"") for l in lines]
 
     for l in lines:
-        for lett in l:
-            if lett.isalpha():
-                elenco_lett.append(lett)
+        elenco_parole.extend(re.findall(pattern_variabile_valida, l))
 
-    elenco_lett = list(set(elenco_lett))
+    elenco_parole = list(set(elenco_parole))
 
-    return elenco_lett
+    return elenco_parole
 
     
 def separa_metodi(lines):
@@ -289,7 +299,8 @@ def separa_metodi(lines):
     for l in lines:
         if abs(opened - closed) == 0 and l != '':
             tmp_code = []
-            tmp = l.split("(")
+            tmp = l.replace(" ", "")
+            tmp = tmp.split("(")
             func_name = tmp[0].replace("(","")
             tmp[1] = tmp[1].replace(")","").replace("{","")
             func_var = [v for v in tmp[1].split(",")]
@@ -335,7 +346,7 @@ def compila_funzione(func_name, func_param, func_lines, anonim, other_func_names
     #inserimento corpo della funzione
 
     try:
-        code.extend(compila_corpo(func_lines,global_data['start_id'], anonim))
+        code.extend(compila_corpo(func_lines,global_data['start_id'], anonim, other_func_names))
     except Exception:
         addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo {func_name}")
         
@@ -360,7 +371,7 @@ def compila_input(input_path, anonim):
 
     lines = [x.strip() for x in inp.readlines()]
 
-    lines = clean(lines, True)
+    lines = clean(lines, True, True, False) #pulisce ma non toglie gli spazi
 
     inp.close()
 
