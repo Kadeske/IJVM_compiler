@@ -76,19 +76,19 @@ def getArithmetic(s):
     #trasforma la sintassi accorciata di incrementi e decrementi in operazioni normali es a++ -> a = a + 1
     if "+=" in s:
         tmp = s.split("+=")
-        s = f"{tmp[0].strip()} = {tmp[0].strip()} + {tmp[1].strip()}"
+        s = f"{tmp[0].strip()} = {tmp[0].strip()} + ({tmp[1].strip()})"
     elif "-=" in s:
         tmp = s.split("-=")
-        s = f"{tmp[0].strip()} = {tmp[0].strip()} - {tmp[1].strip()}"
+        s = f"{tmp[0].strip()} = {tmp[0].strip()} - ({tmp[1].strip()})"
     elif "++" in s:
         tmp = s.replace("++","")
-        if bool(re.fullmatch(pattern_variabile_valida, tmp)):
+        if bool(re.fullmatch(pattern_variabile_valida, tmp.strip())):
             return [f"IINC {tmp.strip()} 1"]
         else:
             addError(global_data['error_log_path'], "Attenzione! utilizzo errato dell'operatore di inremento '++'")
     elif "--" in s:
         tmp = s.replace("--","")
-        if bool(re.fullmatch(pattern_variabile_valida, tmp)):
+        if bool(re.fullmatch(pattern_variabile_valida, tmp.strip())):
             return [f"IINC {tmp.strip()} -1"]
         else:
             addError(global_data['error_log_path'], "Attenzione! utilizzo errato dell'operatore di decremento '--'")
@@ -99,7 +99,7 @@ def getArithmetic(s):
     res = compila_ijvm(s[1].strip())    #trasformo l'operazione dopo l'uguale
 
     #Rimetto il risultato dell'operazione nel left value, controllando che sia una variabile
-    if bool(re.fullmatch(pattern_variabile_valida, s[0])):
+    if bool(re.fullmatch(pattern_variabile_valida, s[0].strip())):
             res.append(f"ISTORE {s[0]}")
 
   
