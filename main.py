@@ -31,20 +31,21 @@ def main():
 
 
 
-    try:
-        if global_data['always_on']:
-            #controlla nel tempo se il file nel path specificato viene modificato
-            old_hash = get_file_hash(input_path)
-            while True:
-                if old_hash != get_file_hash(input_path):
+    if global_data['always_on']:
+        #controlla nel tempo se il file nel path specificato viene modificato
+        old_hash = get_file_hash(input_path)
+        while True:
+            if old_hash != get_file_hash(input_path):
+                try:
                     compila_input(input_path, anonim)
-                    old_hash = get_file_hash(input_path)
-                time.sleep(global_data['seconds_between_checks'])
-        else:
-            compila_input(input_path, anonim)
-    except:
-        addError(global_data["error_log_path"], "Errore inaspettato e sconosciuto, arriva da 'compila_input()")
+                except:
+                    addError(global_data["error_log_path"], "Errore inaspettato e sconosciuto, arriva da 'compila_input()")
 
+
+                old_hash = get_file_hash(input_path)
+            time.sleep(global_data['seconds_between_checks'])
+    else:
+        compila_input(input_path, anonim)
 
 
 

@@ -75,17 +75,17 @@ def modifica_else_if(code):
 
 def modifica_graffe_struct(code):
 
+    do_trovato = False
     new_code = []
     for c in code:
         tmp = c
         if getStruct(tmp) == "" and "{" in tmp:
             tmp = tmp.replace("{", "")
 
-        elif getStruct(tmp) in ["if", "for", "while", "else", "else_if"] and not "{" in tmp:
+        elif getStruct(tmp) in ["if", "for", "else", "else_if", "do"] and not "{" in tmp or getStruct(tmp) == "while" and not "}" in tmp:
             tmp = tmp + "{"
 
         elif getStruct(tmp) == "" and  "}" in tmp and len(tmp) > 1:
-            print (tmp)
             tmp = tmp.replace("}", "")
             new_code.append(tmp)
             tmp = "}"
@@ -96,7 +96,8 @@ def modifica_graffe_struct(code):
     return new_code
 
 def clean(code, isCode = True):
-    pattern = r'\bint\b\s+\w+'
+    pattern_int = r'\bint\b\s+\w+'
+    pattern_void = r'\bvoid\b\s+\w+'
 
 
     #spazi, virgola(tranne nel for), numeri iniziali
@@ -115,8 +116,11 @@ def clean(code, isCode = True):
             while tmp != "" and tmp[0].isnumeric(): #toglie i numeri all'inizio di ogni riga
                 tmp = tmp[1:]    
             
-            if re.search(pattern, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
+            if re.search(pattern_int, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
                 tmp = tmp.replace("int","")
+            
+            if re.search(pattern_void, tmp):     #individua "int" come assegnazione di una variabile e lo rimuove
+                tmp = tmp.replace("void","")
 
 
         tmp = tmp.replace(" ", "")      #toglie ogni spazio
@@ -149,7 +153,7 @@ def controlla_errore_sintassi(line, anonim):
             addError(global_data['error_log_path'], "Attenzione! -> { mancante in for")
 
     if "while" in line:
-        if not "{" in line:
+        if not "{" in line and not "}" in line:
             print("ERRORE --> { mancante in while" if not anonim else "!!{while")
             addError(global_data['error_log_path'], "Attenzione! -> { mancante in while")
 
@@ -222,7 +226,6 @@ def indent_code(code_lines):
     indented_lines = []
     indent_level = 1
    
-    print(code_lines)
 
     for line in code_lines:
         tmp = None 
@@ -246,6 +249,23 @@ def indent_code(code_lines):
         indented_lines.append(tmp)
             
     return indented_lines
+
+
+def converti_all_lista(lista):
+
+    new_lista = []
+
+    for l in lista:
+
+        if "\n" in l:
+            tmp = l.split("\n")
+
+            new_lista.extend(tmp)
+        else:
+            new_lista.append(l)
+
+    return new_lista
+        
 
 
 

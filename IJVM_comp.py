@@ -173,8 +173,11 @@ def compila_corpo(lines, next_tag, anonim):
             elif "else" in l:
                 prec = f"GOTO C{next_tag}\n"
             elif st == "do":
-                cond = l[l.index("("):l.index(")")+1]
-                prec = f"{getCondition(cond, f"O{act}")}"
+                if "while" in l:
+                    cond = l[l.index("("):l.index(")")+1]
+                    prec = f"{getCondition(cond, f"O{act}")}"
+                else:
+                    addError(global_data['error_log_path'], f"Errore: la chiusura del do non coincide con il while associato")
 
             else:
                 prec = ""
@@ -232,6 +235,8 @@ def compila_corpo(lines, next_tag, anonim):
             order.extend(compila_ijvm(tmp.strip()))
             order.append("INVOKEVIRTUAL print")
 
+
+    order = converti_all_lista(order)
     order = indent_code(order)
 
     cp_order = order.copy()
@@ -250,11 +255,13 @@ def compila_corpo(lines, next_tag, anonim):
 
     return order
 
-def elenca_variabili(lines):
-
-    words = ["for","while", "if", "else", "print", "input", "return", "fun"]
-
+def elenca_variabili(lines, other_func_names):
+    words = ["for","while", "if", "else", "print", "input", "return", "fun", "do"]
+    
     elenco_lett = []
+
+    for f in other_func_names:
+        lines = [l.replace(f,"") for l in lines]
 
     for w in words:
         lines = [l.replace(w,"") for l in lines]
@@ -305,12 +312,13 @@ def separa_metodi(lines):
 
 
 
-def compila_funzione(func_name, func_param, func_lines, anonim):
+def compila_funzione(func_name, func_param, func_lines, anonim, other_func_names):
 
     code = []
-    elenco_var = elenca_variabili(func_lines)
+    elenco_var = elenca_variabili(func_lines, other_func_names)
     for x in func_param:
-        elenco_var.remove(x)
+        if x in elenco_var:
+            elenco_var.remove(x)
 
     #apertura metodo
     if func_name != "main":
@@ -371,12 +379,12 @@ def compila_input(input_path, anonim):
     func_keys = list(func_lines.keys())
 
     if "main" in func_keys:
-        code.extend(compila_funzione("main", [], func_lines["main"], anonim))
+        code.extend(compila_funzione("main", [], func_lines["main"], anonim, func_keys))
         func_keys.remove("main")
     #per ogni metodo compila corpo
     
     for k in func_keys:
-        code.extend(compila_funzione(k, func_parameters[k], func_lines[k],anonim))
+        code.extend(compila_funzione(k, func_parameters[k], func_lines[k],anonim,func_keys))
 
 
     #apri file output
