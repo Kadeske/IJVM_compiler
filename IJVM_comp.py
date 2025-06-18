@@ -11,7 +11,7 @@ from utils import *
       `*-._`._(__.--*"`.\
 """
 
-pattern_variabile_valida = r'(?<!\S)[a-zA-Z_][a-zA-Z0-9_]*(?!\S=+-*/;,)'
+pattern_variabile_valida = r'(?!\S=+-*/;,)[a-zA-Z_][a-zA-Z0-9_]*(?!\S=+-*/;,)'
 
 
 def genera_albero(espressione):
@@ -121,10 +121,50 @@ def getOper(s):
     else:
         return None
     
-def getCondition(s, label):
+def getCondition(s,label):
+    return getSingleCondition(s,label)
+    
+    # c > 8 && a == b || b == 9 && c == 0 && t == 9
+    conds_or = []
+    conds_and = []
+    if "||" in s:
+        tmp = s.split("||")
+        for t in tmp:
+            if "&&" in t:
+                sep = t.split("&&")
+                conds_and.extend(sep[1:])
+                conds_or.append(sep[0])
+            else:
+                conds_or.append(t)
+    else :
+        pass
+    print( conds_or)
+    print (conds_and)
+
+
+def getSingleCondition(s, label, invert = False):
     oper = getOper(s)
     res = ''
-    
+
+
+    if invert:
+        if "<" in oper:
+            new_oper = ">"
+        elif ">" in oper:
+            new_oper = "<"
+
+        if new_oper != None and "=" in oper:
+            new_oper+= "="
+        elif oper == "==":
+            new_oper = "!="
+        else:
+            new_oper = "=="
+        
+        oper = new_oper
+                
+
+
+
     s = s.split(oper)
 
     if "<" in oper:
@@ -168,6 +208,7 @@ def compila_corpo(lines, next_tag, anonim, other_func_names):
 
 
     for l in lines:
+        
 
         controlla_errore_sintassi(l, anonim)
 
@@ -189,6 +230,8 @@ def compila_corpo(lines, next_tag, anonim, other_func_names):
                     prec = f"{getCondition(cond, f"C{act}")}\nGOTO O{act}\n"
                 else:
                     addError(global_data['error_log_path'], f"Errore: la chiusura del do non coincide con il while associato")
+
+
 
             else:
                 prec = ""
@@ -256,8 +299,6 @@ def compila_corpo(lines, next_tag, anonim, other_func_names):
 
     #scorre e cambia nomi alle etichette 
     key_etichette = elenco_etichette.keys()
-
-
     for o in cp_order:
         for k in key_etichette: 
             o = o.replace(f"O{k}", f"{elenco_etichette[k]}{k}")
@@ -268,7 +309,7 @@ def compila_corpo(lines, next_tag, anonim, other_func_names):
     return order
 
 def elenca_variabili(lines, other_func_names):
-    words = ["for","while", "if", "else", "print", "input", "return", "fun", "do"]
+    words = ["for","while", "if", "else", "print", "printf", "input", "return", "fun", "do"]
     
     elenco_parole = []
 
@@ -298,12 +339,13 @@ def separa_metodi(lines):
     closed = 0
     for l in lines:
         if abs(opened - closed) == 0 and l != '':
-            tmp_code = []
-            tmp = l.replace(" ", "")
-            tmp = tmp.split("(")
-            func_name = tmp[0].replace("(","")
-            tmp[1] = tmp[1].replace(")","").replace("{","")
-            func_var = [v for v in tmp[1].split(",")]
+            if len(l.replace("","").strip()) > 1:
+                tmp_code = []
+                tmp = l.replace(" ", "")
+                tmp = tmp.split("(")
+                func_name = tmp[0].replace("(","")
+                tmp[1] = tmp[1].replace(")","").replace("{","")
+                func_var = [v for v in tmp[1].split(",")]
         
 
         tmp_code.append(l)
@@ -347,7 +389,7 @@ def compila_funzione(func_name, func_param, func_lines, anonim, other_func_names
 
     try:
         code.extend(compila_corpo(func_lines,global_data['start_id'], anonim, other_func_names))
-    except Exception:
+    except Exception :
         addError(global_data['error_log_path'], f"Errore inaspettato durante il compilamento del corpo del metodo {func_name}")
         
 
@@ -375,12 +417,16 @@ def compila_input(input_path, anonim):
 
     inp.close()
 
+    #toglie maiuscole dalle srtrutture
+    lines = lowercase_target_words_regex(lines)
+
     
 
 
     #dividi codice per metodi
     try:
         func_parameters, func_lines = separa_metodi(lines)
+       
     except Exception:
         addError(global_data['error_log_path'], "Errore inaspettato nel riconoscimento delle funzioni, prova a ricontrollare firme e chiusure delle funzioni")
         return
@@ -392,10 +438,12 @@ def compila_input(input_path, anonim):
     if "main" in func_keys:
         code.extend(compila_funzione("main", [], func_lines["main"], anonim, func_keys))
         func_keys.remove("main")
+        code.append("\n")
     #per ogni metodo compila corpo
     
     for k in func_keys:
         code.extend(compila_funzione(k, func_parameters[k], func_lines[k],anonim,func_keys))
+        code.append("\n")
 
 
     #apri file output
@@ -417,7 +465,7 @@ def compila_input(input_path, anonim):
             else:
                 #inserisco primo pezzo template (fino al simbolo scelto)
                 template = open(global_data['template_path'], "r")
-                template_lines = [x.strip() for x in template.readlines()]
+                template_lines = [x.replace("\n","") for x in template.readlines()]
                 for tl in template_lines:
                     if global_data['template_symbol_insertion'] not in tl:
                         out.write(f"{tl}\n")

@@ -4,8 +4,8 @@ from datetime import *
 import subprocess
 import platform
 
-
-
+path_settings = "settings.sett"
+global_data = {}
 def clear_terminal():
     if platform.system() == "Windows":
         subprocess.run("cls", shell=True)
@@ -45,6 +45,25 @@ def getStruct(s):
         return ""
     
 
+
+def lowercase_target_words_regex(text_list):
+    target_words = ["for", "while", "if", "else", "print", "printf", "input", "return", "do"]
+
+    target_pattern = re.compile(
+        r'\b(' + '|'.join(map(re.escape, target_words)) + r')\b',
+        flags=re.IGNORECASE
+    )
+    processed_list = []
+    for text in text_list:
+        # Sostituisce ogni occorrenza di una parola target con la sua versione lowercase
+        processed_text = target_pattern.sub(
+            lambda match: match.group(0).lower(),
+            text
+        )
+        processed_list.append(processed_text)
+
+    return processed_list
+
     #moficca gli else if, li separa in if con all'interno degli else annidati
 def modifica_else_if(code):
     n_elif = 0
@@ -68,32 +87,61 @@ def modifica_else_if(code):
                 new_code.append("}")
 
         else:
-            new_code.append(c)
+            new_code.append(c.replace("printf","print"))
 
     
     return new_code
+
 
 def modifica_graffe_struct(code):
 
     do_trovato = False
     new_code = []
-    for c in code:
+    for i, c in enumerate(code):
         tmp = c
-        if getStruct(tmp) == "" and "{" in tmp:
+        if getStruct(tmp) == "" and "{" in tmp: #togliele { senza nessuna struct
             tmp = tmp.replace("{", "")
 
+        #aggiunge { alle struct se ne sono prive, ignorando il while se ha una }, perchè è un do
         elif getStruct(tmp) in ["if", "for", "else", "else_if", "do"] and not "{" in tmp or getStruct(tmp) == "while" and not "}" in tmp:
             tmp = tmp + "{"
 
+        #manda a capo } se messa in una riga non vuota priva di struct
         elif getStruct(tmp) == "" and  "}" in tmp and len(tmp) > 1:
             tmp = tmp.replace("}", "")
             new_code.append(tmp)
             tmp = "}"
 
+
+            ''' 
+            elif "}" in tmp:
+                if i < len(code-1):
+                    if "else" in code[i+1]:
+                        tmp = ""
+            
+            if "else" in tmp and "}" not in tmp:
+                tmp = "}" + tmp 
+            '''
         new_code.append(tmp)
 
+    code = new_code.copy()
+    new_code = []
 
+    for i, c in enumerate(code):
+        tmp = c 
+
+        if i < len(code)-1:
+            if getStruct(code[i+1]) == "else" and "}" in tmp and not "}" in code[i+1]:
+                tmp = ""
+            elif getStruct(tmp) == "else" and not "}" in tmp:
+                tmp = "}" + tmp
+        new_code.append(tmp)
+        
+
+    
     return new_code
+
+
 
 def clean(code, isCode = True, removeInitNumbers = True, removeSpaces = True):
     pattern_int = r'\bint\b\s+\w+'
@@ -125,7 +173,7 @@ def clean(code, isCode = True, removeInitNumbers = True, removeSpaces = True):
 
         if removeSpaces:
             tmp = tmp.replace(" ", "")      #toglie ogni spazio
-
+        #if tmp != '\n':
         new_code.append(tmp)
     
     return new_code
@@ -196,7 +244,7 @@ def carica_impostazioni():
         'template_symbol_insertion': template_symbol_insertion
     }
 
-    inp = open("settings.sett")
+    inp = open(path_settings,"r")
 
     sett = [x.strip() for x in inp.readlines()]
 
@@ -270,10 +318,7 @@ def converti_all_lista(lista):
     return new_lista
         
 
-
-
 #carica impostazioni globali
 global_data = carica_impostazioni()
-
 
 
