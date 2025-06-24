@@ -123,6 +123,7 @@ def getOper(s):
     
 def getCondition(s,label):
     return getSingleCondition(s,label)
+    #mai finito, sono troppo pigro e non serve
     
     # c > 8 && a == b || b == 9 && c == 0 && t == 9
     conds_or = []

@@ -45,7 +45,7 @@ def getStruct(s):
         return ""
     
 
-
+#scambia anche i printf con print
 def lowercase_target_words_regex(text_list):
     target_words = ["for", "while", "if", "else", "print", "printf", "input", "return", "do"]
 
@@ -60,7 +60,7 @@ def lowercase_target_words_regex(text_list):
             lambda match: match.group(0).lower(),
             text
         )
-        processed_list.append(processed_text)
+        processed_list.append(processed_text.replace("printf","print"))
 
     return processed_list
 
@@ -87,7 +87,7 @@ def modifica_else_if(code):
                 new_code.append("}")
 
         else:
-            new_code.append(c.replace("printf","print"))
+            new_code.append(c)
 
     
     return new_code
@@ -131,9 +131,9 @@ def modifica_graffe_struct(code):
         tmp = c 
 
         if i < len(code)-1:
-            if getStruct(code[i+1]) == "else" and "}" in tmp and not "}" in code[i+1]:
+            if getStruct(code[i+1]) in ['else', 'else_if'] and "}" in tmp and not "}" in code[i+1]:
                 tmp = ""
-            elif getStruct(tmp) == "else" and not "}" in tmp:
+            elif getStruct(tmp) in ['else', 'else_if'] and not "}" in tmp:
                 tmp = "}" + tmp
         new_code.append(tmp)
         

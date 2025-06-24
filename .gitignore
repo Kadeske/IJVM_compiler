@@ -4,3 +4,6 @@ __pycache__
 *.ijvm
 venv
 testing
+
+
+!template.txt

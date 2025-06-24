@@ -1,0 +1,181 @@
+.constant
+OBJREF 0x40
+endline 0x3b
+.end-constant
+
+
+<-->
+
+.method mod(a,b)
+.var
+r
+.end-var
+	ILOAD a
+	ISTORE r
+	while0:
+		ILOAD r
+		ILOAD b 
+		ISUB
+		IFLT fine_while0
+		 
+		ILOAD r
+		ILOAD b
+		ISUB
+		ISTORE r
+		GOTO while0
+	fine_while0:
+	ILOAD r
+	IRETURN
+.end-method
+
+
+.method div(a,b)
+.var
+q
+r
+.end-var
+	BIPUSH 0
+	ISTORE q
+	ILOAD a
+	ISTORE r
+	while0:
+		ILOAD r
+		ILOAD b
+		ISUB
+		IFLT fine_while0
+		
+		ILOAD r
+		ILOAD b
+		ISUB
+		ISTORE r
+		ILOAD q
+		BIPUSH 1
+		IADD
+		ISTORE q
+		GOTO while0
+	fine_while0:
+	ILOAD q
+	IRETURN
+.end-method
+
+
+.method mul(a,b)
+.var
+p
+i
+.end-var
+	BIPUSH 0
+	ISTORE p
+	BIPUSH 0
+	ISTORE i
+	while0:
+		ILOAD b
+		ILOAD i
+		ISUB
+		DUP
+		IFLT fine_while0
+		IFEQ fine_while0
+		
+		ILOAD p
+		ILOAD a
+		IADD
+		ISTORE p
+		ILOAD i
+		BIPUSH 1
+		IADD
+		ISTORE i
+		GOTO while0
+	fine_while0:
+	ILOAD p
+	IRETURN
+.end-method
+
+
+
+
+
+.method input()
+.var
+num
+.end-var
+
+BIPUSH 0x0
+ISTORE num
+
+loop:
+IN
+DUP
+
+LDC_W ENDLINE
+ISUB
+IFEQ stop
+
+BIPUSH 0x30
+ISUB
+
+LDC_W OBJREF
+ILOAD num
+BIPUSH 10
+INVOKEVIRTUAL mul
+
+IADD
+ISTORE num
+GOTO loop
+
+stop:
+ILOAD num
+IRETURN
+
+.end-method
+
+
+.method print(x)
+ILOAD x
+IFEQ printz
+
+LDC_W OBJREF
+ILOAD x
+INVOKEVIRTUAL print_digits
+GOTO end
+printz:
+BIPUSH 0x30
+OUT
+end:
+
+BIPUSH 0
+IRETURN
+.end-method
+
+.method print_digits(x)
+.var
+char
+.end-var
+
+ILOAD x
+IFEQ end
+
+LDC_W OBJREF
+ILOAD x
+BIPUSH 10
+INVOKEVIRTUAL mod
+
+BIPUSH 0x30
+IADD
+ISTORE char
+
+LDC_W OBJREF
+ILOAD x
+BIPUSH 10
+INVOKEVIRTUAL div
+
+LDC_W OBJREF
+SWAP
+INVOKEVIRTUAL print_digits
+
+ILOAD char
+OUT
+
+end:
+BIPUSH 0
+IRETURN
+.end-method
