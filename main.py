@@ -9,8 +9,10 @@ def main():
     open(global_data['error_log_path'], "w+")
 
     #richiesta modalità anonima
-    anonim = input("Mod anonima? [1 = si altro = no]")
-
+    if global_data['anonim_always_on'] != True:
+        anonim = input("Mod anonima? [1 = si altro = no]")
+    else:
+        anonim = True
 
     if anonim:  #cancella la domandas
         clear_terminal()

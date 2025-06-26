@@ -82,14 +82,16 @@ def modifica_else_if(code):
             new_code.append(tmp_else)
             new_code.append(tmp_if)
 
-        elif isElse_if and "}" in c and getStruct(c) == "":
+        elif isElse_if and "}" in c and getStruct(c) in [""]:
             for _ in range(n_elif+1):
                 new_code.append("}")
+            isElse_if = False
+        
 
-        else:
+        else: 
             new_code.append(c)
 
-    
+  
     return new_code
 
 
@@ -230,6 +232,7 @@ def carica_impostazioni():
     load_template = True
     template_path = "template.txt"
     template_symbol_insertion = "<-->"
+    anonim_always_on = True
 
     instr = {
         'start_id': start_id,
@@ -241,7 +244,8 @@ def carica_impostazioni():
         'error_log_path' : error_log_path,
         'load_template': load_template,
         'template_path': template_path,
-        'template_symbol_insertion': template_symbol_insertion
+        'template_symbol_insertion': template_symbol_insertion,
+        'anonim_always_on' : anonim_always_on
     }
 
     inp = open(path_settings,"r")
