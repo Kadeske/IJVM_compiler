@@ -4,8 +4,9 @@
 # ATTENZIONE
 
 Non ho nessuna responsabilità sull'utilizzo del programma, decidete voi cosa farci, a me è sembrato 'divertente'.
+**Pubblico solamente dal 9 luglio 2025.**
 
-Infatti è tutto vibe code, molto disordinato e poco leggibile. **Non** è un progetto serio.
+Infatti è tutto storto, molto disordinato e poco leggibile (probabilmente una IA lo fa meglio). **Non** è un progetto serio.
 Buona fortuna se vuoi guardare o modificare il codice, non ricordo nemmeno io come funziona, troppo spaghettoso.
 
   
